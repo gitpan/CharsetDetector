@@ -1,9 +1,8 @@
 CHANGES
 CharsetDetector.pm
-INSTALL
 LICENSE
 Makefile.PL
 MANIFEST
 README
-t/CharsetDetector.t
+t/test.t
 META.yml                                 Module meta-data (added by MakeMaker)

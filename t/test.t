@@ -1,56 +1,44 @@
 use strict;
 use warnings(FATAL=>'all');
+
 use CharsetDetector;
-
-#===export EasyTest Function
-sub plan {&EasyTest::std_plan};
-*ok = \&EasyTest::ok;
-sub DIE {&EasyTest::DIE};
-sub NO_DIE {&EasyTest::NO_DIE};
-sub ANY {&EasyTest::ANY};
-#==============================
-
-plan(11);
-
-my ($true,$false)=(1,'');
+use Test::Simple tests => 11;
 
 my $str_uni = Encode::decode('utf8', 'abcd連動型広告配信過去のプレスリリース一覧');
 
 #check special input ok
-ok('iso-8859-1', \&CharsetDetector::detect, ['']); 
-ok('', \&CharsetDetector::detect, [undef]);
+ok('iso-8859-1' eq CharsetDetector::detect(''));
+ok(CharsetDetector::detect(undef) eq '' );
 
 #check det1 ok 
 my $str_gbk = Encode::encode('gbk', $str_uni);
-ok('cp936', \&CharsetDetector::detect, [$str_gbk]);
+ok('cp936' eq CharsetDetector::detect($str_gbk));
 
 my $str_utf8 = Encode::encode('utf8', $str_uni);
-ok('utf8', \&CharsetDetector::detect, [$str_utf8]);
+ok('utf8' eq CharsetDetector::detect($str_utf8));
 
 my $str_sjis = Encode::encode('shiftjis', $str_uni);
-ok('shiftjis', \&CharsetDetector::detect, [$str_sjis]);
+ok('shiftjis' eq CharsetDetector::detect($str_sjis));
 
 my $str_euc_jp = Encode::encode('euc-jp', $str_uni);
-ok('euc-jp', \&CharsetDetector::detect, [$str_euc_jp]);
+ok('euc-jp' eq CharsetDetector::detect($str_euc_jp));
 
 my $str_iso_2002_jp = Encode::encode('iso-2022-jp', $str_uni);
-ok('iso-2022-jp', \&CharsetDetector::detect, [$str_iso_2002_jp]);
-
-
+ok('iso-2022-jp' eq CharsetDetector::detect($str_iso_2002_jp));
 
 #check trim ok
 $str_gbk = Encode::encode('gbk', $str_uni);
-ok('iso-8859-1', \&CharsetDetector::detect, [$str_gbk,4]);
-ok('cp936', \&CharsetDetector::detect, ['abcd  charset=gb18030',4]);
+ok('iso-8859-1' eq CharsetDetector::detect($str_gbk,4));
+ok('cp936' eq CharsetDetector::detect('abcd  charset=gb18030',4));
 
 #check det2 ok
 my $str_charset = "charset=gb18030";
-ok('cp936', \&CharsetDetector::detect, [$str_charset]); 
+ok('cp936' eq CharsetDetector::detect($str_charset)); 
 
 #check det1 && det2
 my $str_uni2 = Encode::decode('utf8', 'abcd連動型広告配信過去のプレスリリース一覧 charset=gb18030');
 $str_iso_2002_jp = Encode::encode('iso-2022-jp', $str_uni2);
-ok('cp936', \&CharsetDetector::detect, [$str_iso_2002_jp]);
+ok('cp936' eq CharsetDetector::detect($str_iso_2002_jp));
 
 1;
 

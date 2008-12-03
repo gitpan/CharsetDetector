@@ -1,6 +1,6 @@
 OVERVIEW
 
-The CharsetDetector.pm module aims to detect charset
+The CharsetDetector.pm module module aims to detect charset,optimized for EastAsia charset and website content
 
 All of these feature is in a easy way.
 
@@ -13,13 +13,6 @@ directory:
    make
    make test
    make install
-
-or simply copy CharsetDetector.pm to your lib path
-
-To uninstall this module type the following:
-
-rm -rdf `cat /usr/lib/perl5/site_perl/5.8.5/i386-linux-thread-multi/auto/CharsetDetector/.packlist` /usr/lib/perl5/site_perl/5.8.5/i386-linux-thread-multi/auto/CharsetDetector
-
 
 Author
 	QIAN YU / foolfish@cpan.org

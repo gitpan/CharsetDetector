@@ -3,22 +3,28 @@ use strict;
 use warnings( FATAL => 'all' );
 use Encode;
 
-our $VERSION = '1.0.0';
+use Exporter 'import';
+our  @EXPORT_OK = qw(detect detect1);
+
+our $VERSION = '2.0.1';
 
 #===================================
 #===Author  : qian.yu            ===
 #===Email   : foolfish@cpan.org  ===
 #===MSN     : qian.yu@adways.net ===
-#===QQ      : 19937129           ===
-#===Homepage: www.lua.cn         ===
+#===QQ      : 9097939            ===
+#===Homepage: www.fishlib.cn     ===
 #===================================
 
+#===2.0.1(2008-12-03): add eval to avoid die
+#===2.0.0(2008-12-02): modify the name from CharsetDetector to Encode::Detect::CJK
 #===1.0.0(2005-08-28): first release
 
 #ascii      : ascii
 #iso-8859-1 : iso-8859-1
 #utf8       : utf8 utf-8-strict
-#cp936      : euc-cn cp936
+#utf16      : utf16
+#cp936      : euc-cn cp936 
 #big5-eten  : big5-eten
 #euc-jp     : euc-jp
 #shiftjis   : shiftjis
@@ -7898,6 +7904,8 @@ sub detect {
 	if ( !defined( $_[0] ) ) {
 		return '';
 	}
+my $ret;
+eval{
 	my $len     = length $_[0];
 	my $bin_ful = \$_[0];
 	my $bin     =
@@ -7906,20 +7914,30 @@ sub detect {
 	  : \$_[0];
 	my $det1 = get_det1($bin);
 	if ( in_safe_list($det1) ) {
-		return filter_ascii( $_encoding_reverse->{$det1} );
+		$ret=filter_ascii( $_encoding_reverse->{$det1} );
 	}
 	else {
 		my $det2 = get_det2($bin_ful);
 		if ( defined($det2) ) {
-			return filter_ascii($det2);
+			$ret=filter_ascii($det2);
 		}
 		else {
-			return filter_ascii( $_encoding_reverse->{$det1} );
+			$ret=filter_ascii( $_encoding_reverse->{$det1} );
 		}
 	}
+};
+if($@){
+	undef $@;
+	return 'iso-8859-1';
+}else{
+	return $ret;
+}
+
 }
 
 sub detect1 {
+my $ret;
+eval{
 	my $len     = length $_[0];
 	my $bin_ful = \$_[0];
 	my $bin     =
@@ -7927,7 +7945,15 @@ sub detect1 {
 	  ? \substr( $_[0], 0, $_[1] )
 	  : \$_[0];
 	my $det1 = get_det1($bin);
-	return filter_ascii( $_encoding_reverse->{$det1} );
+	$ret=filter_ascii( $_encoding_reverse->{$det1} );
+};
+if($@){
+	undef $@;
+	return 'iso-8859-1';
+}else{
+	return $ret;
+}
+	
 }
 
 sub get_det1 {
@@ -8598,56 +8624,61 @@ __END__
 
 =head1 NAME
 
-CharsetDetector - Detect charset
+CharsetDetector - A Charset Detector, optimized for EastAsia charset and website content
 
 =head1 SYNOPSIS
 
-  use CharsetDetector;
+	use CharsetDetector;
+	use CharsetDetector qw(detect detect1);
 	
-	my $binary = "...";
-	my $charset_str = "charset = ...";
+	#simple use it
+	$charset = CharsetDetector::detect($octets);
 	
-	my $charset = CharsetDetector::detect($binary);
-	$charset = CharsetDetector::detect1($binary, 5);
-	# Test the charset of $binary
-	# '' for undef
-	# 'iso-8859-1' for ''
+	#with length limit
+	$charset = CharsetDetector::detect($octets,$max_len);
 	
-	$charset = CharsetDetector::detect($binary, 5);
-	$charset = CharsetDetector::detect1($binary, 5);
-	# Test the charset of substr($binary, 0, 5)
-	
-	$charset = CharsetDetector::detect($charset_str);
-	# Test the charset in $charset_str
-	
-	$charset = CharsetDetector::detect_debug($binary);
-	print $CharsetDetector::log_txt;
-	# you can see the log of testing $binary
-	
-I<The synopsis above only lists the major methods and parameters.>
+	#don't consider html head charset as a factor to detect charset
+	$charset = CharsetDetector::detect1($octets);
+	$charset = CharsetDetector::detect1($octets,$max_len);
 
 =head1 Basic Function
 
 =head2 detect - detect charset
-		
-		$charset = CharsetDetector::detect($binary [, $max_len]);
-		$charset = CharsetDetector::detect($charset_str [, $max_len]);
-		# $charset_str is like "charset=..."
-		# if input is '', output is 'iso-8859-1'
-		# if input is undef, output is ''
-		
-=head2 detect1 - detect charset only in encoding
-		
-		$charset = CharsetDetector::detect1($binary [, $max_len]);
-		# if input is '', output is 'iso-8859-1'
-		# if input is undef, output is ''
 
-=head2 detect_debug - detect charset and then you can see the log
-		
-		$charset = CharsetDetector::detect_debug($binary [, $max_len]);
-		print $CharsetDetector::log_txt;
-		# if input is '', output is 'iso-8859-1'
-		# if input is undef, output is ''
+	$charset = CharsetDetector::detect($octets);
+	$charset = CharsetDetector::detect($octets,$max_len);
+
+=head2 detect1 - detect only by binary
+
+detect charset don't consider html head charset as a factor to detect charset
+by DEFAULT, detetor will consider 
+html header (e.g. <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> ) as a factor to detect charset, 
+if you don't want detetor to consider html header as a factor, use detect1 instead of detect
+
+	$charset = CharsetDetector::detect1($octets);
+	$charset = CharsetDetector::detect1($octets,$max_len);
+
+=head2 Return Value
+
+if $octets is null return ''
+if $octets is '' return 'iso-8859-1'
+else return charset name
+
+=head1 Supported Charset List
+
+	return value: alias
+	
+	ascii       : ascii
+	iso-8859-1  : iso-8859-1
+	utf8        : utf8 utf-8-strict
+	utf16       : utf16
+	cp936       : euc-cn(gb2312) cp936(gbk) gb18030
+	big5-eten   : big5-eten
+	euc-jp      : euc-jp
+	shiftjis    : shiftjis
+	iso-2022-jp : iso-2022-jp
+	euc-kr      : euc-kr
+	iso-2022-kr : iso-2022-kr
 
 =head1 COPYRIGHT
 
